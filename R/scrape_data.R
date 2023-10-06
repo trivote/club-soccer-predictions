@@ -80,6 +80,16 @@ match_logs <-
   dplyr::select(date, team, opponent, home_away, gls, xg, npxg)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Combined Team Dataset ----
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+team_data <-
+  match_logs |>
+  dplyr::full_join(squad_values, by = "team", relationship = "many-to-many")
+
+readr::write_csv(team_data, here::here("data", "team_data.csv"))
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Player Shot Logs ----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -132,13 +142,3 @@ shot_logs <-
   dplyr::relocate(opponent, .after = team)
 
 readr::write_csv(shots, here::here("data", "player_data.csv"))
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Combined Match Dataset ----
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-team_data <-
-  match_logs |>
-  dplyr::full_join(squad_values, by = "team", relationship = "many-to-many")
-
-readr::write_csv(team_data, here::here("data", "team_data.csv"))
