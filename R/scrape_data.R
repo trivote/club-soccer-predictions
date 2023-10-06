@@ -1,7 +1,7 @@
 # Script for pulling and combining FB Ref match logs and Transfermarkt values
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Squad Values ----
+# Transfermarkt Team Values ----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # get player values from transfermarkt
@@ -36,7 +36,7 @@ squad_values <-
   dplyr::arrange(desc(value))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Squad Match Logs ----
+# Team Match Logs ----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 match_urls <-
@@ -80,7 +80,61 @@ match_logs <-
   dplyr::select(date, team, opponent, home_away, gls, xg, npxg)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Combined Dataset ----
+# Player Shot Logs ----
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+match_urls <-
+  worldfootballR::fb_match_urls(
+    country = "ENG",
+    gender = "M",
+    season_end_year = 2020:2023,
+    tier = "1st"
+  )
+
+get_shot_logs <- function(url) {
+  worldfootballR::fb_match_shooting(
+    match_url = url
+  )
+}
+
+shot_logs_raw <-
+  purrr::pmap(list(match_urls), get_shot_logs) |>
+  dplyr::bind_rows()
+
+shot_logs <-
+  shot_logs_raw |>
+  janitor::clean_names(
+    replace = c(
+      "_Expected" = "",
+      "PK" = "pk",
+      "xG" = "xg",
+      "PS" = "ps",
+      "xAG" = "xag"
+    )
+  ) |>
+  dplyr::rename(team = squad) |>
+  dplyr::mutate(
+    team = stringr::str_replace_all(team, "Utd", "United"),
+    team = dplyr::case_when(
+      team == "West Ham" ~ "West Ham United",
+      team == "Brighton" ~ "Brighton & Hove Albion",
+      team == "Tottenham" ~ "Tottenham Hotspur",
+      team == "Nott'ham Forest" ~ "Nottingham Forest",
+      team == "Wolves" ~ "Wolverhampton Wanderers",
+      team == "West Brom" ~ "West Bromwich Albion",
+      .default = team
+    )
+  ) |>
+  dplyr::full_join(
+    match_logs |> dplyr::select(date, team, opponent),
+    by = c("date", "team")
+  ) |>
+  dplyr::relocate(opponent, .after = team)
+
+readr::write_csv(shots, here::here("data", "player_data.csv"))
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Combined Match Dataset ----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 team_data <-
