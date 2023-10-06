@@ -76,7 +76,8 @@ match_logs <-
       home_away == "Away" ~ home_team
     )
   ) |>
-  dplyr::select(team, home_away, opponent, gls, xg, npxg)
+  dplyr::rename(date = match_date) |>
+  dplyr::select(date, team, opponent, home_away, gls, xg, npxg)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Combined Dataset ----
