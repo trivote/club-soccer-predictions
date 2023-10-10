@@ -31,7 +31,7 @@ squad_values <-
   tidyr::drop_na() |>
   dplyr::summarise(
     value = sum(player_market_value_euro),
-    .by = c(team, league, season)
+    .by = c(team, season)
   ) |>
   dplyr::arrange(desc(value))
 
@@ -69,15 +69,33 @@ match_logs <-
       "xAG" = "xag"
     )
   ) |>
-  tidyr::drop_na(home_goals) |>
+  tidyr::pivot_wider(
+    names_from = home_away,
+    values_from = npxg
+  ) |>
+  dplyr::rename(
+    date = match_date,
+    home_npxg = Home,
+    away_npxg = Away
+  ) |>
+  tidyr::fill(home_npxg, .direction = "down") |>
+  tidyr::fill(away_npxg, .direction = "up") |>
+  dplyr::select(
+    date,
+    dplyr::starts_with(c("home", "away")) &
+      dplyr::ends_with(c("_team", "_score", "_xg", "_npxg"))
+  ) |>
+  dplyr::distinct() |>
+  dplyr::relocate("away_team", .after = "home_team") |>
   dplyr::mutate(
-    opponent = dplyr::case_when(
-      home_away == "Home" ~ away_team,
-      home_away == "Away" ~ home_team
+    season = dplyr::case_when(
+      date <= "2020-07-26" ~ 2019,
+      dplyr::between(date, "2020-07-26", "2021-05-23") ~ 2020,
+      dplyr::between(date, "2021-05-23", "2022-05-22") ~ 2021,
+      dplyr::between(date, "2022-05-22", "2023-05-28") ~ 2022,
     )
   ) |>
-  dplyr::rename(date = match_date) |>
-  dplyr::select(date, team, opponent, home_away, gls, xg, npxg)
+  dplyr::relocate("season", .after = "date")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Combined Team Dataset ----
@@ -85,7 +103,27 @@ match_logs <-
 
 team_data <-
   match_logs |>
-  dplyr::full_join(squad_values, by = "team", relationship = "many-to-many")
+  dplyr::full_join(
+    squad_values,
+    by = dplyr::join_by(
+      "home_team" == "team",
+      season
+    )
+  ) |>
+  dplyr::rename(
+    home_value = value
+  ) |>
+  dplyr::full_join(
+    squad_values,
+    by = dplyr::join_by(
+      "away_team" == "team",
+      season
+    )
+  ) |>
+  dplyr::rename(
+    away_value = value
+  ) |>
+  dplyr::glimpse()
 
 readr::write_csv(team_data, here::here("data", "team_data.csv"))
 
