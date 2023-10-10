@@ -86,6 +86,10 @@ match_logs <-
       dplyr::ends_with(c("_team", "_score", "_xg", "_npxg"))
   ) |>
   dplyr::distinct() |>
+  dplyr::rename(
+    home_goals = home_score,
+    away_goals = away_score
+  ) |>
   dplyr::relocate("away_team", .after = "home_team") |>
   dplyr::mutate(
     season = dplyr::case_when(
@@ -122,8 +126,7 @@ team_data <-
   ) |>
   dplyr::rename(
     away_value = value
-  ) |>
-  dplyr::glimpse()
+  )
 
 readr::write_csv(team_data, here::here("data", "team_data.csv"))
 

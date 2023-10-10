@@ -1,4 +1,4 @@
-date,season,home_team,away_team,home_score,home_xg,home_npxg,away_score,away_xg,away_npxg,home_value,away_value
+date,season,home_team,away_team,home_goals,home_xg,home_npxg,away_goals,away_xg,away_npxg,home_value,away_value
 2019-08-09,2019,Liverpool,Norwich City,4,1.8,1.8,1,0.9,0.9,999300000,142100000
 2019-08-10,2019,West Ham United,Manchester City,0,1.1,1.1,5,3.2,2.4,300700000,1046500000
 2019-08-10,2019,Burnley,Southampton,3,0.9,0.9,0,1.2,1.2,162500000,209400000
